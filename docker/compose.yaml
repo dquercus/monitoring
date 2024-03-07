@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  loki:
+    container_name: loki
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - /etc/docker/monitoring/loki/:/etc/loki/
+      - loki-data:/loki:/loki
+    networks:
+      - monitoring
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:2.9.2
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - /etc/docker/monitoring/promtail/:/etc/promtail/
+      - /var/log:/var/log
+    networks:
+      - monitoring
+
+  grafana:
+    container_name: grafana
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    image: grafana/grafana-enterprise:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - /etc/docker/monitoring/grafana/:/etc/grafana/
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    volumes:
+      - prometheus-data:/prometheus
+      - /etc/docker/monitoring/prometheus:/etc/prometheus/
+      
+volumes:
+  grafana-data:
+  loki-data:
+  prometheus-data:
+
+networks:
+  monitoring:
